@@ -5,6 +5,7 @@ class OctreeNode:
     totPoints = 0
     lowestDist = 255
     lowestDistPoint = None
+    emptyQuad = False
     
 
     def __init__(self,object):
@@ -58,7 +59,13 @@ class OctreeNode:
     def getTotalPoints(self,root,count=0):
         if(count == 0):
             OctreeNode.count = 0
+
+        if(root.root.isDivided == False):
+            OctreeNode.count += len(root.root.points)
+            return OctreeNode.count
+        
         octree = self.getChildren(root)
+
         for node in octree:
             if(node.root.isDivided != True):
                 OctreeNode.count += len(node.root.points)
@@ -68,24 +75,155 @@ class OctreeNode:
 
     def closestImageRGB(self,root,point):
         self.quadPoints = 0
-        octree = self.getChildren(root)
-        for node in octree:
-            if(node.root.boundary.contains(point) == True):
-                if(node.root.isDivided != True):
-                    print("corresponding quad found")
-                    for point2 in node.root.points:
-                        print(math.sqrt(((point.x-point2.x)**2)+((point.y-point2.y)**2)+((point.y-point2.y)**2)),point2.x,point2.y,point2.z)
-                        if(math.sqrt(((point.x-point2.x)**2)+((point.y-point2.y)**2)+((point.y-point2.y)**2)) < OctreeNode.lowestDist):
-                            OctreeNode.lowestDist = math.sqrt(((point.x-point2.x)**2)+((point.y-point2.y)**2)+((point.y-point2.y)**2))
-                            OctreeNode.lowestDistPoint = point2
-                        else:
-                            continue
-                    break
+
+        if(root.root.isDivided == False):
+            print("corresponding quad found")
+            for point2 in node.root.points:
+                print(math.sqrt(((point.x-point2.x)**2)+((point.y-point2.y)**2)+((point.y-point2.y)**2)),point2.x,point2.y,point2.z)
+                if(math.sqrt(((point.x-point2.x)**2)+((point.y-point2.y)**2)+((point.y-point2.y)**2)) < OctreeNode.lowestDist):
+                    OctreeNode.lowestDist = math.sqrt(((point.x-point2.x)**2)+((point.y-point2.y)**2)+((point.y-point2.y)**2))
+                    OctreeNode.lowestDistPoint = point2
                 else:
-                    # print("changing nested quad")
-                    self.closestImageRGB(node.root.node, point)
+                    continue
+                    
+        octree = self.getChildren(root)
+        for i,node in enumerate(octree):
+            if(OctreeNode.emptyQuad == True):
+                print("previous quad was empty")
+                if(len(node.root.points) != 0):
+                    if(node.root.isDivided != True):
+                        if(len(node.root.points) == 0):
+                            print("quad was empty finding closest point amoungst neighboring quads")
+                            itrs = 0
+                            if(i-1 > 0 and i+1 <= 8):
+                                while(i-1 > 0 and i+1 <= 8):
+                                    print("searching from middle")
+                                    if(len(octree[i-itrs].root.points) != 0 or len(octree[i+itrs].root.points) != 0):
+                                        OctreeNode.emptyQuad = False
+                                        mergedPoints = octree[i-1].root.points + octree[i+1].root.points
+                                        for point2 in mergedPoints:
+                                            print(math.sqrt(((point.x-point2.x)**2)+((point.y-point2.y)**2)+((point.y-point2.y)**2)),point2.x,point2.y,point2.z)
+                                            if(math.sqrt(((point.x-point2.x)**2)+((point.y-point2.y)**2)+((point.y-point2.y)**2)) < OctreeNode.lowestDist):
+                                                OctreeNode.lowestDist = math.sqrt(((point.x-point2.x)**2)+((point.y-point2.y)**2)+((point.y-point2.y)**2))
+                                                OctreeNode.lowestDistPoint = point2
+                                            else:
+                                                continue
+                                    else:
+                                        continue
+                            elif(i-1 < 0):
+                                while(i+1 <= 8):
+                                    print("searching from end")
+                                    if(len(octree[i+itrs].root.points) != 0):
+                                        OctreeNode.emptyQuad = False
+                                        for point2 in octree[i+itrs].root.points:
+                                            print(math.sqrt(((point.x-point2.x)**2)+((point.y-point2.y)**2)+((point.y-point2.y)**2)),point2.x,point2.y,point2.z)
+                                            if(math.sqrt(((point.x-point2.x)**2)+((point.y-point2.y)**2)+((point.y-point2.y)**2)) < OctreeNode.lowestDist):
+                                                OctreeNode.lowestDist = math.sqrt(((point.x-point2.x)**2)+((point.y-point2.y)**2)+((point.y-point2.y)**2))
+                                                OctreeNode.lowestDistPoint = point2
+                                            else:
+                                                continue
+                            else:
+                                while(i-1 > 0):
+                                    print("searching from beginning")
+                                    if(len(octree[i-itrs].root.points) != 0):
+                                        OctreeNode.emptyQuad = False
+                                        for point2 in octree[i-itrs].root.points:
+                                            print(math.sqrt(((point.x-point2.x)**2)+((point.y-point2.y)**2)+((point.y-point2.y)**2)),point2.x,point2.y,point2.z)
+                                            if(math.sqrt(((point.x-point2.x)**2)+((point.y-point2.y)**2)+((point.y-point2.y)**2)) < OctreeNode.lowestDist):
+                                                OctreeNode.lowestDist = math.sqrt(((point.x-point2.x)**2)+((point.y-point2.y)**2)+((point.y-point2.y)**2))
+                                                OctreeNode.lowestDistPoint = point2
+                                            else:
+                                                continue
+                        else:
+                            print("corresponding quad found(After Empty Node)")
+                            OctreeNode.emptyQuad = False
+                            for point2 in node.root.points:
+                                print(math.sqrt(((point.x-point2.x)**2)+((point.y-point2.y)**2)+((point.y-point2.y)**2)),point2.x,point2.y,point2.z)
+                                if(math.sqrt(((point.x-point2.x)**2)+((point.y-point2.y)**2)+((point.y-point2.y)**2)) < OctreeNode.lowestDist):
+                                    OctreeNode.lowestDist = math.sqrt(((point.x-point2.x)**2)+((point.y-point2.y)**2)+((point.y-point2.y)**2))
+                                    OctreeNode.lowestDistPoint = point2
+                                else:
+                                    continue
+                            break
+                    else:
+                        # print("changing nested quad")
+                        self.closestImageRGB(node.root.node, point)
+                else:
+                    OctreeNode.emptyQuad = True
+                    print("This parent node is empty")
+                    OctreeNode.emptyQuad = True
+                    if(i+1 > 8):
+                        while(i > 0):
+                            self.closestImageRGB(octree[i-1],point)
+                    else:
+                        continue
+
+
+            if(node.root.boundary.contains(point) == True):
+                if(len(node.root.points) != 0):
+                    if(node.root.isDivided != True):
+                        if(len(node.root.points) == 0):
+                            print("quad was empty finding closest point amoungst neighboring quads")
+                            itrs = 0
+                            if(i-1 > 0 and i+1 <= 8):
+                                while(i-1 > 0 and i+1 <= 8):
+                                    print("searching from middle")
+                                    if(len(octree[i-itrs].root.points) != 0 or len(octree[i+itrs].root.points) != 0):
+                                        mergedPoints = octree[i-1].root.points + octree[i+1].root.points
+                                        for point2 in mergedPoints:
+                                            print(math.sqrt(((point.x-point2.x)**2)+((point.y-point2.y)**2)+((point.y-point2.y)**2)),point2.x,point2.y,point2.z)
+                                            if(math.sqrt(((point.x-point2.x)**2)+((point.y-point2.y)**2)+((point.y-point2.y)**2)) < OctreeNode.lowestDist):
+                                                OctreeNode.lowestDist = math.sqrt(((point.x-point2.x)**2)+((point.y-point2.y)**2)+((point.y-point2.y)**2))
+                                                OctreeNode.lowestDistPoint = point2
+                                            else:
+                                                continue
+                                    else:
+                                        continue
+                            elif(i-1 < 0):
+                                while(i+1 <= 8):
+                                    print("searching from end")
+                                    if(len(octree[i+itrs].root.points) != 0):
+                                        for point2 in octree[i+itrs].root.points:
+                                            print(math.sqrt(((point.x-point2.x)**2)+((point.y-point2.y)**2)+((point.y-point2.y)**2)),point2.x,point2.y,point2.z)
+                                            if(math.sqrt(((point.x-point2.x)**2)+((point.y-point2.y)**2)+((point.y-point2.y)**2)) < OctreeNode.lowestDist):
+                                                OctreeNode.lowestDist = math.sqrt(((point.x-point2.x)**2)+((point.y-point2.y)**2)+((point.y-point2.y)**2))
+                                                OctreeNode.lowestDistPoint = point2
+                                            else:
+                                                continue
+                            else:
+                                while(i-1 > 0):
+                                    print("searching from beginning")
+                                    if(len(octree[i-itrs].root.points) != 0):
+                                        for point2 in octree[i-itrs].root.points:
+                                            print(math.sqrt(((point.x-point2.x)**2)+((point.y-point2.y)**2)+((point.y-point2.y)**2)),point2.x,point2.y,point2.z)
+                                            if(math.sqrt(((point.x-point2.x)**2)+((point.y-point2.y)**2)+((point.y-point2.y)**2)) < OctreeNode.lowestDist):
+                                                OctreeNode.lowestDist = math.sqrt(((point.x-point2.x)**2)+((point.y-point2.y)**2)+((point.y-point2.y)**2))
+                                                OctreeNode.lowestDistPoint = point2
+                                            else:
+                                                continue
+                        else:
+                            print("corresponding quad found")
+                            for point2 in node.root.points:
+                                print(math.sqrt(((point.x-point2.x)**2)+((point.y-point2.y)**2)+((point.y-point2.y)**2)),point2.x,point2.y,point2.z)
+                                if(math.sqrt(((point.x-point2.x)**2)+((point.y-point2.y)**2)+((point.y-point2.y)**2)) < OctreeNode.lowestDist):
+                                    OctreeNode.lowestDist = math.sqrt(((point.x-point2.x)**2)+((point.y-point2.y)**2)+((point.y-point2.y)**2))
+                                    OctreeNode.lowestDistPoint = point2
+                                else:
+                                    continue
+                            break
+                    else:
+                        # print("changing nested quad")
+                        self.closestImageRGB(node.root.node, point)
+                else:
+                    print("This parent node is empty")
+                    OctreeNode.emptyQuad = True
+                    if(i+1 > 8):
+                        while(i > 0):
+                            self.closestImageRGB(octree[i-1],point)
+                    else:
+                        continue
+    
             else:
-                # print("changing node")
                 continue
         OctreeNode.lowestDist = 255
         return OctreeNode.lowestDistPoint
